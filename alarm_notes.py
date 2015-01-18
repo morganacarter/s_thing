@@ -1,6 +1,6 @@
 """Working alarm clock python script.  To test this on the first run, I suggest setting alarm_HH and alarm_MM to whatever your computer clock is displaying at time of run - that way, the alarm will automatically go off. For the second run, set the alarm to go off one minute from computer display. """
 
-"Note: right now, the loop is getting hung on the second run (when setting alarm in advance) -- nt goal for week of 1/19 is to correc this resource issue."
+"Note: right now, the loop is getting hung on the second run (when setting alarm in advance) -- my goal for week of 1/19 is to correc this resource issue."
 
 import time
 import os
