@@ -1,30 +1,61 @@
-"""Working alarm clock python script.  To test this on the first run, I suggest setting alarm_HH and alarm_MM to whatever your computer clock is displaying at time of run - that way, the alarm will automatically go off. For the second run, set the alarm to go off one minute from computer display. """
-
-"Note: right now, the loop is getting hung on the second run (when setting alarm in advance) -- my goal for week of 1/19 is to correc this resource issue."
-
 import time
 import os
-#from non import nonBlockingRawInput
+import requests
+from datetime import datetime, timedelta
 
+#Sets up alarm using user inputs
 name = raw_input("Enter your name.")
 
 print("Hello, " + name)
 
-alarm_HH = raw_input("Enter the hour you want to wake up at") #military time. enter number 0-23
-alarm_MM = raw_input("Enter the minute you want to wake up at") #military time. enter number 0-60. 
-#will combine alarm_HH with alarm_MM. For example: 21:05
+alarm_HH = raw_input("Enter the hour you want to wake up at")
+alarm_MM = raw_input("Enter the minute you want to wake up at")
+alarm_time = "{0}:{1}".format(alarm_HH, alarm_MM)
 
-print("You want to wake up at " + alarm_HH + ":" + alarm_MM)
+#converts raw input into datetime format
+time_obj = datetime.strptime(alarm_time, '%H:%M')
+print time_obj
+
+#JSON requests for WMATA, OPM and Weather. WMATA uses guest api key.
+
+sample_metro_delays = requests.get("https://api.wmata.com/Incidents.svc/json/Incidents?api_key=kfgpmgvfgacx98de9q3xazww").json()
+
+sample_opm_delays=requests.get("http://www.opm.gov/json/operatingstatus.json").json()
+
+sample_weather_delays=requests.get("http://api.openweathermap.org/data/2.5/weather?q=Washington,DC&units=imperial&cnt=7").json()
+
+#establishes how much we'll adjust the time if there is a delay. In our final script, this will be in the 'if there is a delay'...
+"""return the value of dictionary dic given the key"""
+def find_value(dic, key):
+    return dic[key]
+
+delay_minutes =0
+for Incidents in sample_metro_delays:
+    for IncidentType in sample_metro_delays["Incidents"]:
+        if find_value(IncidentType, "IncidentType") == "Delay" and find_value(IncidentType, "LinesAffected").find("SV"):
+            delay_minutes +=1
+if find_value(sample_opm_delays,"StatusSummary").find("Delayed Arrival"):
+    delay_minutes -=4
+if sample_weather_delays['weather'][0]['main'] == "Snow":
+    delay_minutes +=5
+   
+            
+change_in_time = timedelta(minutes=delay_minutes)
+
+#creates the new time the person wants to wake up
+new_time = time_obj - change_in_time
+
+
+print "You want to wake up at {0}".format(new_time.time())
 
 while True:
     now = time.localtime()
-    print now
-    if now.tm_hour == int(alarm_HH) and now.tm_min == int(alarm_MM):
+    if now.tm_hour == int(new_time.hour) and now.tm_min == int(new_time.minute):
         print("ALARM NOW!")
-        os.popen("samplesong.mp3") #place an mp3 file into your python directory. Rename the file samplesong in order for this to open as your alarm
+        os.popen("samplesong.mp3")
         break
 
-    else:
-        print("no alarm")
-    timeout = 60 - now.tm_sec
+    # else:
+    #     print("no alarm")
+    timeout = 300 - now.tm_sec
     
